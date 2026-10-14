@@ -12,3 +12,15 @@ class Owner(Base):
     password_hash = Column(TEXT, nullable=False)
     phone = Column(TEXT)
     created_at = Column(DateTime (timezone=True), nullable=False, server_default=func.now())
+    
+class PendingOwner(Base):
+    __tablename__ = "pending_owners"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(TEXT, index=True, nullable=False)
+    email = Column(TEXT, unique=True, index=True, nullable=False)
+    password_hash = Column(TEXT, nullable=False)
+    hashed_verification_code = Column(TEXT, nullable=False)
+    phone = Column(TEXT)
+    expires_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at = Column(DateTime (timezone=True), nullable=False, server_default=func.now())
