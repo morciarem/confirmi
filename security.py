@@ -24,10 +24,10 @@ def verify_password(plain: str, hashed: str) -> bool:
     except (VerificationError, InvalidHashError):
         return False
     
-def create_access_token(owner_id: uuid.UUID) -> str:
+def create_access_token(owner_id: str) -> str:
     now = datetime.now(timezone.utc)
     payload = {
-        "sub": str(owner_id),
+        "sub": owner_id,
         "type": "access",
         "iat": now,
         "exp": now + timedelta(minutes=auth_settings.access_token_minutes),
@@ -47,13 +47,13 @@ def decode_token(token: str, expected_type: str) -> dict:
 
 
 
-def new_refresh_token(owner_id: uuid.UUID) -> tuple[str, str]:
+def new_refresh_token(owner_id: str, jti: str) -> str:
     now = datetime.now(timezone.utc)
 
     payload = {
         "sub": owner_id,
         "type": "refresh",
-        "jti": str(uuid.uuid4()),
+        "jti": jti,
         "iat": now,
         "exp": now + timedelta(
             days=auth_settings.refresh_token_days
