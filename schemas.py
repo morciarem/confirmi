@@ -21,3 +21,7 @@ class OwnerResponse(OwnerBase):
      
     id: uuid.UUID 
     created_at: datetime
+
+class VerifyRequest(BaseModel):
+    email: EmailStr
+    verification_code: str = Field(min_length=20, max_length=128)

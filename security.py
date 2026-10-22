@@ -5,11 +5,9 @@ import jwt
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError
 
-#from config import settings
+from config import auth_settings
 
 ph = PasswordHasher()
-DUMMY_HASH = ph.hash("dummy-password-for-timing")  # see /login
-ALGORITHM = "HS256"
 
 # hash a secret
 def hash_secret(secret: str) -> str:
@@ -26,32 +24,40 @@ def verify_password(plain: str, hashed: str) -> bool:
     except (VerificationError, InvalidHashError):
         return False
     
-# def create_access_token(owner_id: uuid.UUID) -> str:
-#     now = datetime.now(timezone.utc)
-#     payload = {
-#         "sub": str(owner_id),
-#         "type": "access",
-#         "iat": now,
-#         "exp": now + timedelta(minutes=settings.access_token_minutes),
-#     }
-#     return jwt.encode(payload, settings.secret_key, algorithm=ALGORITHM)
+def create_access_token(owner_id: uuid.UUID) -> str:
+    now = datetime.now(timezone.utc)
+    payload = {
+        "sub": str(owner_id),
+        "type": "access",
+        "iat": now,
+        "exp": now + timedelta(minutes=auth_settings.access_token_minutes),
+    }
+    return jwt.encode(payload, auth_settings.secret_key, algorithm=auth_settings.algorithm)
 
-# def decode_access_token(token: str) -> dict:
-#     payload = jwt.decode(
-#         token,
-#         settings.secret_key,
-#         algorithms=[ALGORITHM],                      # pinned, never read from the token
-#         options={"require": ["exp", "sub", "type"]},
-#     )
-#     if payload["type"] != "access":
-#         raise jwt.InvalidTokenError("wrong token type")
-#     return payload
-
-
-# def hash_refresh_token(raw: str) -> str:
-#     return hashlib.sha256(raw.encode()).hexdigest()
+def decode_token(token: str, expected_type: str) -> dict:
+    payload = jwt.decode(
+        token,
+        auth_settings.secret_key,
+        algorithms=[auth_settings.algorithm],                      # pinned, never read from the token
+        options={"require": ["exp", "sub", "type"]},
+    )
+    if payload["type"] != expected_type:
+        raise jwt.InvalidTokenError("wrong token type")
+    return payload
 
 
-# def new_refresh_token() -> tuple[str, str]:
-#     raw = secrets.token_urlsafe(48)
-#     return raw, hash_refresh_token(raw)
+
+def new_refresh_token(owner_id: uuid.UUID) -> tuple[str, str]:
+    now = datetime.now(timezone.utc)
+
+    payload = {
+        "sub": owner_id,
+        "type": "refresh",
+        "jti": str(uuid.uuid4()),
+        "iat": now,
+        "exp": now + timedelta(
+            days=auth_settings.refresh_token_days
+        ),
+    }
+
+    return jwt.encode(payload, auth_settings.secret_key, algorithm=auth_settings.algorithm)

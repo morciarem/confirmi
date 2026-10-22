@@ -5,42 +5,29 @@ from config import email_settings
 
 
 
-def send_email(to_email: str, link: str):
+def send_email(to_email: str, verification_code: str):
     msg = EmailMessage()
     msg["From"] = email_settings.sender_email
     msg["To"] = to_email
     msg["Subject"] = email_settings.subject
 
-    body = f"{email_settings.body}\n\n{link}"
+    body = f"{email_settings.body}\n\n{verification_code}"
     msg.set_content(body)
 
     context = ssl.create_default_context()
 
     try:
-        print("1. Connecting to Gmail...", flush=True)
-
         with smtplib.SMTP_SSL(
             "smtp.gmail.com",
             465,
             context=context,
             timeout=10,
         ) as server:
-
-            print("2. Connected to Gmail!", flush=True)
-
-            server.set_debuglevel(1)
-
-            print("3. Logging in...", flush=True)
             server.login(
                 email_settings.sender_email,
                 email_settings.sender_password,
             )
-
-            print("4. Login successful!", flush=True)
-
             server.send_message(msg)
-
-            print("5. Email sent successfully!", flush=True)
 
     except smtplib.SMTPAuthenticationError as e:
         print(f"Authentication failed: {e}", flush=True)
